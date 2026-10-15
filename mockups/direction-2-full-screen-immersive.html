@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direction 2 — Full-Screen Immersive</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #111;
+      color: #fff;
+      min-height: 100vh;
+      padding: 48px 20px 64px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .direction-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #E8674A;
+      border: 1px solid #E8674A;
+      border-radius: 4px;
+      padding: 3px 10px;
+      margin-bottom: 14px;
+    }
+
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .page-desc {
+      font-size: 0.88rem;
+      color: #888;
+      line-height: 1.6;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    /* ── Layout ── */
+    .frames-row {
+      display: flex;
+      gap: 28px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .frame-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .frame-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #666;
+    }
+
+    /* ── Phone shell ── */
+    .phone {
+      width: 300px;
+      height: 600px;
+      border-radius: 38px;
+      overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* ── Backgrounds ── */
+    .bg-default  { background: linear-gradient(155deg, #2c2c54 0%, #40407a 50%, #706fd3 100%); }
+    .bg-sunny    { background: linear-gradient(155deg, #e55d27 0%, #e8a838 50%, #f9d423 100%); }
+    .bg-loading  { background: linear-gradient(155deg, #2c2c54 0%, #40407a 50%, #706fd3 100%); }
+    .bg-notfound { background: linear-gradient(155deg, #1a3a5c 0%, #1e6091 50%, #4a90d9 100%); }
+
+    /* ── Full-screen phone layout ── */
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ── Pinned search bar at top ── */
+    .search-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 22px 20px 16px;
+      background: rgba(0,0,0,0.28);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      z-index: 10;
+    }
+
+    .app-name-small {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.72rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 10px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-input {
+      flex: 1;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.84rem;
+      color: #fff;
+      outline: none;
+      min-width: 0;
+    }
+
+    .search-input::placeholder { color: rgba(255,255,255,0.45); }
+
+    .btn-search {
+      background: #E8674A;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Center content area ── */
+    .center-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 28px 40px;
+      text-align: center;
+    }
+
+    /* ── Empty state ── */
+    .empty-prompt {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.6;
+    }
+
+    /* ── Weather result ── */
+    .weather-icon-large {
+      font-size: 5rem;
+      display: block;
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+
+    .weather-city-large {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+
+    .weather-country-small {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .weather-temp-large {
+      font-size: 5rem;
+      font-weight: 200;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 8px;
+      text-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+
+    .weather-desc-large {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 28px;
+    }
+
+    .weather-details-floating {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+    }
+
+    .detail-pill {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Loading state ── */
+    .loading-pill {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 10px;
+    }
+
+    .loading-bar {
+      width: 120px;
+      height: 2px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 1px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    .loading-bar-fill {
+      width: 40%;
+      height: 100%;
+      background: #E8674A;
+      border-radius: 1px;
+    }
+
+    /* ── Not found banner ── */
+    .notfound-pill {
+      background: rgba(255,255,255,0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 16px;
+      padding: 18px 22px;
+      text-align: center;
+      max-width: 240px;
+    }
+
+    .notfound-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
+
+    .notfound-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 5px;
+    }
+
+    .notfound-text {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.62);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 680px) {
+      .frames-row { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="direction-tag">Direction 2 of 3</div>
+    <h1 class="page-title">Full-Screen Immersive</h1>
+    <p class="page-desc">No card border — the weather-shifting gradient fills the whole screen. A frosted search bar is pinned to the top. Weather details float in the centre as large, airy text with pill-shaped labels.</p>
+  </header>
+
+  <div class="frames-row">
+
+    <!-- STATE 1: Before Searching -->
+    <div class="frame-wrapper">
+      <span class="frame-label">Before Searching</span>
+      <div class="phone">
+        <div class="phone-screen bg-default">
+          <div class="search-bar">
+            <div class="app-name-small">Weather</div>
+            <div class="search-row">
+              <input class="search-input" type="text" placeholder="Enter a city…" readonly>
+              <button class="btn-search">Search</button>
+            </div>
+          </div>
+          <div class="center-content">
+            <p class="empty-prompt">Type a city above<br>to see the weather.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE 2: Weather Result -->
+    <div class="frame-wrapper">
+      <span class="frame-label">Weather Result</span>
+      <div class="phone">
+        <div class="phone-screen bg-sunny">
+          <div class="search-bar">
+            <div class="app-name-small">Weather</div>
+            <div class="search-row">
+              <input class="search-input" type="text" value="Barcelona" readonly>
+              <button class="btn-search">Search</button>
+            </div>
+          </div>
+          <div class="center-content">
+            <span class="weather-icon-large">☀️</span>
+            <div class="weather-city-large">Barcelona</div>
+            <div class="weather-country-small">Spain</div>
+            <div class="weather-temp-large">24°</div>
+            <div class="weather-desc-large">Sunny and clear</div>
+            <div class="weather-details-floating">
+              <div class="detail-pill">💧 58%</div>
+              <div class="detail-pill">💨 14 km/h NW</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE 3: Loading -->
+    <div class="frame-wrapper">
+      <span class="frame-label">Loading…</span>
+      <div class="phone">
+        <div class="phone-screen bg-loading">
+          <div class="search-bar">
+            <div class="app-name-small">Weather</div>
+            <div class="search-row">
+              <input class="search-input" type="text" value="Barcelona" readonly>
+              <button class="btn-search">Search</button>
+            </div>
+          </div>
+          <div class="center-content">
+            <div class="loading-pill">Loading…</div>
+            <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE 4: City Not Found -->
+    <div class="frame-wrapper">
+      <span class="frame-label">City Not Found</span>
+      <div class="phone">
+        <div class="phone-screen bg-notfound">
+          <div class="search-bar">
+            <div class="app-name-small">Weather</div>
+            <div class="search-row">
+              <input class="search-input" type="text" value="Xanadu123" readonly>
+              <button class="btn-search">Search</button>
+            </div>
+          </div>
+          <div class="center-content">
+            <div class="notfound-pill">
+              <span class="notfound-icon">🔍</span>
+              <div class="notfound-heading">City not found</div>
+              <div class="notfound-text">We couldn't find that city.<br>Check the spelling and try again.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
