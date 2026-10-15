@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direction 3 — Split Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #111;
+      color: #fff;
+      min-height: 100vh;
+      padding: 48px 20px 64px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .direction-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #E8674A;
+      border: 1px solid #E8674A;
+      border-radius: 4px;
+      padding: 3px 10px;
+      margin-bottom: 14px;
+    }
+
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .page-desc {
+      font-size: 0.88rem;
+      color: #888;
+      line-height: 1.6;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    /* ── Layout ── */
+    .frames-row {
+      display: flex;
+      gap: 28px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .frame-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .frame-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #666;
+    }
+
+    /* ── Phone shell ── */
+    .phone {
+      width: 300px;
+      height: 600px;
+      border-radius: 38px;
+      overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* ── Split screen layout ── */
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top half: black search zone ── */
+    .top-zone {
+      flex: 0 0 50%;
+      background: #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 24px 22px;
+      position: relative;
+    }
+
+    /* Coral accent line between zones */
+    .top-zone::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #E8674A;
+    }
+
+    .app-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 18px;
+      letter-spacing: 0.02em;
+    }
+
+    .app-name span {
+      color: #E8674A;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-input {
+      flex: 1;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.84rem;
+      color: #fff;
+      outline: none;
+      min-width: 0;
+    }
+
+    .search-input::placeholder { color: #555; }
+
+    .btn-search {
+      background: #E8674A;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Bottom half: gradient result zone ── */
+    .bottom-zone {
+      flex: 0 0 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .bg-default-bottom  { background: linear-gradient(160deg, #7b6fcf 0%, #a855a4 100%); }
+    .bg-sunny-bottom    { background: linear-gradient(160deg, #ffd580 0%, #e8785a 100%); }
+    .bg-loading-bottom  { background: linear-gradient(160deg, #7b6fcf 0%, #a855a4 100%); }
+    .bg-notfound-bottom { background: linear-gradient(160deg, #74b9ff 0%, #3a7bd5 100%); }
+
+    /* ── Frosted glass result card (inside bottom zone) ── */
+    .result-card {
+      width: 100%;
+      background: rgba(255,255,255,0.16);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 18px 16px;
+      text-align: center;
+    }
+
+    /* Empty state prompt */
+    .empty-prompt {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.6;
+    }
+
+    /* Weather result */
+    .weather-icon { font-size: 2.2rem; display: block; margin-bottom: 4px; line-height: 1; }
+
+    .weather-city {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1px;
+    }
+
+    .weather-country {
+      font-size: 0.68rem;
+      color: rgba(255,255,255,0.58);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .weather-temp {
+      font-size: 2.8rem;
+      font-weight: 300;
+      color: #E8674A;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .weather-desc {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.82);
+      margin-bottom: 12px;
+    }
+
+    .weather-details {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .detail {
+      font-size: 0.73rem;
+      color: rgba(255,255,255,0.75);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Loading state */
+    .loading-block { text-align: center; }
+
+    .loading-spinner {
+      width: 26px;
+      height: 26px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #E8674A;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+    }
+
+    .loading-text {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.65);
+    }
+
+    /* Not found */
+    .notfound-block { text-align: center; }
+
+    .notfound-icon { font-size: 1.8rem; display: block; margin-bottom: 6px; }
+
+    .notfound-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .notfound-text {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 680px) {
+      .frames-row { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="direction-tag">Direction 3 of 3</div>
+    <h1 class="page-title">Split Panel</h1>
+    <p class="page-desc">The screen is cut in two: a pure-black zone at the top holds the search, separated by a thin coral line. The gradient result zone below shows the weather in a frosted card. High contrast, graphic, structured.</p>
+  </header>
+
+  <div class="frames-row">
+
+    <!-- STATE 1: Before Searching -->
+    <div class="frame-wrapper">
+      <span class="frame-label">Before Searching</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="top-zone">
+            <div class="app-name">Weather<span>.</span></div>
+            <div class="search-row">
+              <input class="search-input" type="text" placeholder="Enter a city…" readonly>
+              <button class="btn-search">Search</button>
+            </div>
+          </div>
+          <div class="bottom-zone bg-default-bottom">
+            <div class="result-card">
+              <p class="empty-prompt">Your weather<br>will appear here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE 2: Weather Result -->
+    <div class="frame-wrapper">
+      <span class="frame-label">Weather Result</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="top-zone">
+            <div class="app-name">Weather<span>.</span></div>
+            <div class="search-row">
+              <input class="search-input" type="text" value="Barcelona" readonly>
+              <button class="btn-search">Search</button>
+            </div>
+          </div>
+          <div class="bottom-zone bg-sunny-bottom">
+            <div class="result-card">
+              <span class="weather-icon">☀️</span>
+              <div class="weather-city">Barcelona</div>
+              <div class="weather-country">Spain</div>
+              <div class="weather-temp">24°C</div>
+              <div class="weather-desc">Sunny and clear</div>
+              <div class="weather-details">
+                <div class="detail">💧 58% humidity</div>
+                <div class="detail">💨 14 km/h NW</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE 3: Loading -->
+    <div class="frame-wrapper">
+      <span class="frame-label">Loading…</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="top-zone">
+            <div class="app-name">Weather<span>.</span></div>
+            <div class="search-row">
+              <input class="search-input" type="text" value="Barcelona" readonly>
+              <button class="btn-search">Search</button>
+            </div>
+          </div>
+          <div class="bottom-zone bg-loading-bottom">
+            <div class="result-card">
+              <div class="loading-block">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE 4: City Not Found -->
+    <div class="frame-wrapper">
+      <span class="frame-label">City Not Found</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="top-zone">
+            <div class="app-name">Weather<span>.</span></div>
+            <div class="search-row">
+              <input class="search-input" type="text" value="Xanadu123" readonly>
+              <button class="btn-search">Search</button>
+            </div>
+          </div>
+          <div class="bottom-zone bg-notfound-bottom">
+            <div class="result-card">
+              <div class="notfound-block">
+                <span class="notfound-icon">🔍</span>
+                <div class="notfound-heading">City not found</div>
+                <div class="notfound-text">We couldn't find that city.<br>Check the spelling and try again.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
