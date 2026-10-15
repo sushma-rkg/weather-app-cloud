@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weather</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -81,6 +81,87 @@
       cursor: pointer;
     }
 
+    /* ── Error message ── */
+    .error-text {
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.85);
+      text-align: center;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.18);
+      margin: 22px 0;
+    }
+
+    /* ── Weather result ── */
+    .weather-block {
+      text-align: center;
+    }
+
+    .weather-city {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .weather-country {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .weather-localtime {
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.55);
+      margin-bottom: 14px;
+    }
+
+    .weather-icon {
+      width: 64px;
+      height: 64px;
+      display: block;
+      margin: 0 auto 6px;
+    }
+
+    .weather-temp {
+      font-family: 'Inter', sans-serif;
+      font-size: 3.4rem;
+      font-weight: 300;
+      color: #E8674A;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .weather-desc {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.88);
+      margin-bottom: 18px;
+    }
+
+    .weather-details {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .detail {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
     @media (max-width: 480px) {
       .card {
         padding: 26px 20px;
@@ -92,9 +173,68 @@
   <div class="card">
     <h1 class="app-title">Weather</h1>
     <div class="search-row">
-      <input class="search-input" type="text" placeholder="Enter a city…" aria-label="City name">
-      <button class="btn-search">Search</button>
+      <input class="search-input" id="city-input" type="text" placeholder="Enter a city…" aria-label="City name">
+      <button class="btn-search" id="search-btn">Search</button>
+    </div>
+    <p class="error-text" id="error-msg" hidden></p>
+    <div id="result" hidden>
+      <div class="divider"></div>
+      <div class="weather-block">
+        <div class="weather-city" id="w-city"></div>
+        <div class="weather-country" id="w-country"></div>
+        <div class="weather-localtime" id="w-localtime"></div>
+        <img class="weather-icon" id="w-icon" src="" alt="">
+        <div class="weather-temp" id="w-temp"></div>
+        <div class="weather-desc" id="w-desc"></div>
+        <div class="weather-details">
+          <div class="detail">🌡 Feels like <span id="w-feels"></span></div>
+          <div class="detail">💧 <span id="w-humidity"></span></div>
+          <div class="detail">💨 <span id="w-wind"></span></div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <script>
+    const input   = document.getElementById('city-input');
+    const btn     = document.getElementById('search-btn');
+    const errorEl = document.getElementById('error-msg');
+    const result  = document.getElementById('result');
+
+    async function search() {
+      const city = input.value.trim();
+      if (!city) return;
+
+      errorEl.hidden = true;
+      result.hidden  = true;
+
+      const res  = await fetch('/api/weather?city=' + encodeURIComponent(city));
+      const data = await res.json();
+
+      if (data.error) {
+        errorEl.textContent = data.error;
+        errorEl.hidden = false;
+        return;
+      }
+
+      document.getElementById('w-city').textContent    = data.city;
+      document.getElementById('w-country').textContent = data.country;
+      document.getElementById('w-localtime').textContent = data.localTime;
+      document.getElementById('w-icon').src            = data.icon;
+      document.getElementById('w-icon').alt            = data.description;
+      document.getElementById('w-temp').textContent    = data.tempC + '°C';
+      document.getElementById('w-desc').textContent    = data.description;
+      document.getElementById('w-feels').textContent   = data.feelsLikeC + '°C';
+      document.getElementById('w-humidity').textContent = data.humidity + '%';
+      document.getElementById('w-wind').textContent    = data.windKph + ' km/h ' + data.windDir;
+
+      result.hidden = false;
+    }
+
+    btn.addEventListener('click', search);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') search();
+    });
+  </script>
 </body>
 </html>
